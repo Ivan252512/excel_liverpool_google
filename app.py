@@ -1,19 +1,21 @@
 from flask import Flask, render_template, jsonify
-from flask_pymongo import PyMongo
+from flask_pymongo import pymongo
 from func import Excel
 from bson.json_util import dumps
+
+SETTINGS = {
+    
+}
 
 #App
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
-#Configure the database
-app.config["MONGO_URI"] = 'mongodb://localhost:27017/excel'
-mongo = PyMongo(app)
-
-#Mongo Collections
-documents_collection = mongo.db.documents
-pages_collection = mongo.db.pages
-data_collection = mongo.db.data
+CONNECTION_STRING = "mongodb+srv://ivan:sarampion25@cluster0-s8nin.mongodb.net/test?retryWrites=true&w=majority"
+client = pymongo.MongoClient(CONNECTION_STRING)
+db = client.get_database('excel')
+documents_collection = pymongo.collection.Collection(db, 'documents')
+pages_collection = pymongo.collection.Collection(db, 'pages')
+data_collection = pymongo.collection.Collection(db, 'data')
 
 def to_db(src="ArchivosP.xlsx"):
     excel = Excel(src)
@@ -58,16 +60,16 @@ def to_db(src="ArchivosP.xlsx"):
             data_collection.insert(data_to_save, check_keys=False)
             del data_to_save
 
-@app.route("/")
+@app.route("/", methods=['GET'])
 def home():
     return render_template("index.html")
 
-@app.route("/load_database")
+@app.route("/load_database", methods=['POST'])
 def load_database():
     to_db()
     return jsonify({"response": "ok"})
 
-@app.route("/tables")
+@app.route("/tables", methods=['GET'])
 def tables():
     documents = dumps(documents_collection.find({}))
     pages = dumps(pages_collection.find({}))
