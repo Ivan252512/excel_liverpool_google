@@ -71,9 +71,9 @@ def load_database():
 
 @app.route("/tables", methods=['GET'])
 def tables():
-    documents = dumps(documents_collection.find({}))
-    pages = dumps(pages_collection.find({}))
-    data = dumps(data_collection.find({}))
+    documents = documents_collection.find({})
+    pages = pages_collection.find({})
+    data = data_collection.find({})
     return render_template("tables.html", 
                             documents=documents,
                             pages = pages,
