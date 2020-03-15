@@ -262,16 +262,26 @@
           <!-- Page Heading -->
           <h1 class="h3 mb-2 text-gray-800">Tablas</h1>
 
+          <div class="row">
+            <div class="col-md-3">
+              <label for="pages">Selecciona una página:</label>
+              <select id="pages" class="custom-select custom-select-sm form-control form-control-sm">
+              </select>
+            </div>
+          </div>
+
+          <br>
+
           <!-- DataTales Example -->
           <div class="card shadow mb-4">
             <div class="card-header py-3">
               <h6 class="m-0 font-weight-bold text-primary">Datos</h6>
             </div>
-            <div class="card-body">
+            <div class="card-xbody">
               <div class="table-responsive">
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                   <thead>
-                    <tr>
+                    <tr  id="th">
                       <th>Name</th>
                       <th>Position</th>
                       <th>Office</th>
@@ -281,7 +291,7 @@
                     </tr>
                   </thead>
                   <tfoot>
-                    <tr>
+                    <tr id="tf">
                       <th>Name</th>
                       <th>Position</th>
                       <th>Office</th>
@@ -290,18 +300,15 @@
                       <th>Salary</th>
                     </tr>
                   </tfoot>
-                  <tbody>
-
-                    {% for dato in data %}
-                      <tr>
-                        <td>Tiger Nixon</td>
-                        <td>System Architect</td>
-                        <td>Edinburgh</td>
-                        <td>61</td>
-                        <td>2011/04/25</td>
-                        <td>{{ dato|e }}</td>
-                      </tr>
-                    {% endfor %}
+                  <tbody id="tb">
+                    <tr>
+                      <td>Name</td>
+                      <td>Position</td>
+                      <td>Office</td>
+                      <td>Age</td>
+                      <td>Start date</td>
+                      <td>Salary</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -370,6 +377,54 @@
 
   <!-- Page level custom scripts -->
   <script src="{{ url_for('static', filename='js/demo/datatables-demo.js') }}"></script>
+  
+
+  <script>
+    $( document ).ready(function() {
+
+        $("#pages").html(
+          "{% for page in pages %}"+
+            "<option value={{ page['name'] }}>{{ page['name'] }}</option>"+
+          "{% endfor %}"
+        );
+
+        $("#pages").on('change', function(){
+          $.ajax({
+              url: "{{ url_for('rows') }}",
+              type: "POST",
+              contentType: "application/json",
+              data: JSON.stringify({"page": this.value})
+          }).done(function(data) {
+
+            var keys = ""; 
+            Object.keys(data[0]).forEach(k => {
+              keys += "<th>"+k+"</th>";
+            });
+
+            $("#th").html(
+              keys
+            )
+
+            $("#tf").html(
+              keys
+            )
+
+            var values = ""
+            data.forEach(td => {
+              values += "<tr>";
+              Object.keys(data[0]).forEach(k => {
+                values += "<td>"+td[k]+"</td>";
+              });
+              values += "</tr>"
+            });
+
+            $("#tb").html(
+              values
+            )            
+          });
+        });
+    });
+  </script>
 
 </body>
 

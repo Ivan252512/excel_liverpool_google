@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 from flask_pymongo import pymongo
 from func import Excel
 from bson.json_util import dumps
@@ -7,7 +7,6 @@ SETTINGS = {
     
 }
 
-#App
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
 CONNECTION_STRING = "mongodb+srv://ivan:sarampion25@cluster0-s8nin.mongodb.net/test?retryWrites=true&w=majority"
@@ -16,8 +15,14 @@ db = client.get_database('excel')
 documents_collection = pymongo.collection.Collection(db, 'documents')
 pages_collection = pymongo.collection.Collection(db, 'pages')
 data_collection = pymongo.collection.Collection(db, 'data')
+rows_collection = pymongo.collection.Collection(db, 'rows')
 
 def to_db(src="ArchivosP.xlsx"):
+    db.drop_collection("documents")
+    db.drop_collection("pages")
+    db.drop_collection("data")
+    db.drop_collection("rows")
+    
     excel = Excel(src)
 
     all_columns = excel.load_as_array()
@@ -46,19 +51,31 @@ def to_db(src="ArchivosP.xlsx"):
             data_to_save = {
                 "page" : ""
             }
-            row_to_save["page"] = str(i[0])
-            del row_to_save
             if sig:
                 title = j
                 sig=False
             if j[0] == "vacio":
                 sig=True
             else:
-                data_to_save["page"] = i[0]
+                is_row_title = False
+                row_to_save["page"] = str(i[0])
+                data_to_save["page"] = str(i[0])
                 for x in range(len(title)):
-                    data_to_save[str(title[x])] = str(j[x])
-            data_collection.insert(data_to_save, check_keys=False)
-            del data_to_save
+                    if str(title[x]) == str(j[x]):
+                        row_to_save[str(title[x])] = str(j[x])
+                        is_row_title = True
+                    else:
+                        data_to_save[str(title[x])] = str(j[x])
+                        is_row_title = False
+                if is_row_title:
+                    if "None" in row_to_save and len(row_to_save)<3:
+                        del row_to_save
+                    else:
+                        rows_collection.insert(row_to_save, check_keys=False)
+                        del row_to_save
+                else:
+                    data_collection.insert(data_to_save, check_keys=False)
+                    del data_to_save
 
 @app.route("/", methods=['GET'])
 def home():
@@ -71,13 +88,21 @@ def load_database():
 
 @app.route("/tables", methods=['GET'])
 def tables():
-    documents = documents_collection.find({})
     pages = pages_collection.find({})
-    data = data_collection.find({})
     return render_template("tables.html", 
-                            documents=documents,
-                            pages = pages,
-                            data = data)
+                            pages = pages)
+
+@app.route("/page", methods=['POST'])
+def rows():
+    content = request.get_json(silent=True)
+    page = content['page']
+
+    data = data_collection.find({"page":page}, {'_id': False, "page":False})
+
+    return Response(dumps(data), mimetype='application/json')
+
+
+
 
 if __name__ == "__main__":
     app.run()
