@@ -9,11 +9,11 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>SB Admin 2 - Tables</title>
+  <title>Liverpool - Excel</title>
 
   <!-- Custom fonts for this template -->
   <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
-  <link href="{{ url_for('static', filename='https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i') }}" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i'" rel="stylesheet">
 
   <!-- Custom styles for this template -->
   <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
@@ -53,7 +53,7 @@
       <li class="nav-item active">
         <a class="nav-link" href="{{ url_for('tables') }}">
           <i class="fas fa-fw fa-table"></i>
-          <span>Tables</span></a>
+          <span>Tablas</span></a>
       </li>
 
       <!-- Divider -->
@@ -268,6 +268,30 @@
               <select id="pages" class="custom-select custom-select-sm form-control form-control-sm">
               </select>
             </div>
+            <div class="col-md-3">
+              <label for="reload">Recargar página:</label>
+              <button id="reload" onclick="location.reload();" class="btn btn-outline-warning custom-button-sm form-control form-control-sm">Recargar</button>
+            </div>
+            <div class="col-md-3">
+              <label for="reload">Cargar nuevo archivo:</label>
+              <button id="reload" class="btn btn-outline-success custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#excelModal">Subir excel</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-3">
+              <label for="rows">Selecciona una columna:</label>
+              <select id="rows" class="custom-select custom-select-sm form-control form-control-sm">
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="search_text">Introduce el valor o rango a buscar:</label>
+              <input type="text" name="search_text" id="search_text" class="custom-text custom-text-sm form-control form-control-sm">
+            </div>
+            <div class="col-md-3">
+              <label for="search">Consultar:</label>
+              <button id="search" class="btn btn-outline-primary custom-button-sm form-control form-control-sm">Consultar</button>
+            </div>
           </div>
 
           <br>
@@ -281,34 +305,14 @@
               <div class="table-responsive">
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                   <thead>
-                    <tr  id="th">
-                      <th>Name</th>
-                      <th>Position</th>
-                      <th>Office</th>
-                      <th>Age</th>
-                      <th>Start date</th>
-                      <th>Salary</th>
+                    <tr id="th">
                     </tr>
                   </thead>
                   <tfoot>
                     <tr id="tf">
-                      <th>Name</th>
-                      <th>Position</th>
-                      <th>Office</th>
-                      <th>Age</th>
-                      <th>Start date</th>
-                      <th>Salary</th>
                     </tr>
                   </tfoot>
                   <tbody id="tb">
-                    <tr>
-                      <td>Name</td>
-                      <td>Position</td>
-                      <td>Office</td>
-                      <td>Age</td>
-                      <td>Start date</td>
-                      <td>Salary</td>
-                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -361,6 +365,30 @@
     </div>
   </div>
 
+  <!-- Excel Modal-->
+  <div class="modal fade" id="excelModal" tabindex="-1" role="dialog" aria-labelledby="excelModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="excelModalLabel">¿Seguro que deseas reemplazar ek archivo anterior?</h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form action="" method="post" id="excel_upload" enctype="multipart/form-data">
+            <input type="file" name="excel" id="excel" class="custom-button custom-button-sm form-control form-control-sm">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" type="submit" id="excel_upload_button">Cargar Archivo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- Bootstrap core JavaScript-->
   <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
@@ -383,31 +411,51 @@
     $( document ).ready(function() {
 
         $("#pages").html(
-          "{% for page in pages %}"+
+          "<option value={{ pages[0]['name'] }} selected >{{ pages[0]['name'] }}</option>"+
+          "{% for page in pages[1:] %}"+
             "<option value={{ page['name'] }}>{{ page['name'] }}</option>"+
           "{% endfor %}"
         );
 
-        $("#pages").on('change', function(){
+        function showTable(page, row, text) {
+
+          var search = {
+            "page":page
+          } 
+          if (!(text==null || row==null)) {
+            search["row"] = row;
+            search["value"] = text;
+          }
+
           $.ajax({
               url: "{{ url_for('rows') }}",
               type: "POST",
               contentType: "application/json",
-              data: JSON.stringify({"page": this.value})
+              data: JSON.stringify(search)
           }).done(function(data) {
 
+            if (data.length<=0) {
+              return;
+            }
+
             var keys = ""; 
+            var rows = ""
             Object.keys(data[0]).forEach(k => {
               keys += "<th>"+k+"</th>";
+              rows += "<option value="+k+">"+k+"</option>";
             });
 
             $("#th").html(
               keys
-            )
+            );
 
             $("#tf").html(
               keys
-            )
+            );
+
+            $("#rows").html(
+              rows
+            );
 
             var values = ""
             data.forEach(td => {
@@ -420,7 +468,34 @@
 
             $("#tb").html(
               values
-            )            
+            );
+          });
+        }
+
+        var page = $( "#pages option:selected" ).text();
+        showTable(page, null, null);
+
+        $("#pages").on('change', function(){
+          showTable(this.value, null, null)
+        })
+
+        $("#search").on('click', function(){
+          var page = $( "#pages option:selected" ).text();
+          var row = $( "#rows option:selected" ).text();
+          var text = $( "#search_text" ).val();
+          console.log(text);
+          showTable(page, row, text);
+        });
+
+        $("#excel_upload_button").on('submit', function(){
+          $("#excel_upload").submit(function(){
+            $.ajax({
+              url: "{{ url_for('rows') }}",
+              type: "POST",
+              contentType: "application/json",
+              data: JSON.stringify(search)
+            }).done(function(data) {
+            });
           });
         });
     });

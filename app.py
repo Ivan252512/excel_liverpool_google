@@ -83,6 +83,21 @@ def home():
 
 @app.route("/load_database", methods=['POST'])
 def load_database():
+    # check if the post request has the file part
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return redirect(url_for('uploaded_file',
+                                filename=filename))
     to_db()
     return jsonify({"response": "ok"})
 
@@ -96,13 +111,13 @@ def tables():
 def rows():
     content = request.get_json(silent=True)
     page = content['page']
-
-    data = data_collection.find({"page":page}, {'_id': False, "page":False})
-
+    row = content['row'] if 'row' in content else None
+    value = content['value'] if 'value' in content else None
+    if row!=None and value!=None:
+        data = data_collection.find({"page":page, row:value}, {'_id': False, "page":False})
+    else:
+        data = data_collection.find({"page":page}, {'_id': False, "page":False})
     return Response(dumps(data), mimetype='application/json')
-
-
-
 
 if __name__ == "__main__":
     app.run()
