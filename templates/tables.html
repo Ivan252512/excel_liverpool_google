@@ -81,7 +81,7 @@
             <i class="fa fa-bars"></i>
           </button>
 
-          <!-- Topbar Search -->
+          <!-- 
           <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
             <div class="input-group">
               <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
@@ -92,6 +92,7 @@
               </div>
             </div>
           </form>
+          Topbar Search -->
 
           <!-- Topbar Navbar -->
           <ul class="navbar-nav ml-auto">
@@ -264,6 +265,14 @@
 
           <div class="row">
             <div class="col-md-3">
+              <label for="documents">Selecciona un documento:</label>
+              <select id="documents" class="custom-select custom-select-sm form-control form-control-sm">
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-3">
               <label for="pages">Selecciona una página:</label>
               <select id="pages" class="custom-select custom-select-sm form-control form-control-sm">
               </select>
@@ -285,7 +294,7 @@
               </select>
             </div>
             <div class="col-md-3">
-              <label for="search_text">Introduce el valor o rango a buscar:</label>
+              <label for="search_text">Introduce el valor a buscar:</label>
               <input type="text" name="search_text" id="search_text" class="custom-text custom-text-sm form-control form-control-sm">
             </div>
             <div class="col-md-3">
@@ -329,7 +338,7 @@
       <footer class="sticky-footer bg-white">
         <div class="container my-auto">
           <div class="copyright text-center my-auto">
-            <span>Copyright &copy; Your Website 2019</span>
+            <span>Copyright &copy; Liverpool 2019</span>
           </div>
         </div>
       </footer>
@@ -370,18 +379,15 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="excelModalLabel">¿Seguro que deseas reemplazar ek archivo anterior?</h5>
-          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">×</span>
-          </button>
+          <h5 class="modal-title" id="excelModalLabel">¿Seguro que deseas reemplazar el archivo anterior?</h5>
         </div>
         <div class="modal-body">
-          <form action="" method="post" id="excel_upload" enctype="multipart/form-data">
-            <input type="file" name="excel" id="excel" class="custom-button custom-button-sm form-control form-control-sm">
+          <form action="{{ url_for( 'load_database' ) }}" method="POST" id="excel_upload" enctype="multipart/form-data">
+            <input type="file" name="file" id="file" class="custom-button custom-button-sm form-control form-control-sm">
           </form>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+          <button class="btn btn-secondary" type="button" id="excel_upload_button_cancel" data-dismiss="modal">Cancelar</button>
           <button class="btn btn-primary" type="submit" id="excel_upload_button">Cargar Archivo</button>
         </div>
       </div>
@@ -409,6 +415,14 @@
 
   <script>
     $( document ).ready(function() {
+
+
+        $("#documents").html(
+          "<option value={{ documents[0]['name'] }} selected >{{ documents[0]['name'] }}</option>"+
+          "{% for doc in documents[1:] %}"+
+            "<option value={{ doc['name'] }}>{{ doc['name'] }}</option>"+
+          "{% endfor %}"
+        );
 
         $("#pages").html(
           "<option value={{ pages[0]['name'] }} selected >{{ pages[0]['name'] }}</option>"+
@@ -487,16 +501,11 @@
           showTable(page, row, text);
         });
 
-        $("#excel_upload_button").on('submit', function(){
-          $("#excel_upload").submit(function(){
-            $.ajax({
-              url: "{{ url_for('rows') }}",
-              type: "POST",
-              contentType: "application/json",
-              data: JSON.stringify(search)
-            }).done(function(data) {
-            });
-          });
+        $("#excel_upload_button").on('click', function(){
+          $(this).prop('disabled', true); 
+          $(this).html("Cargando...");
+          $("#excel_upload_button").prop('disabled', true); 
+          $("#excel_upload").submit();
         });
     });
   </script>

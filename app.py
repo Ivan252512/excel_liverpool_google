@@ -1,13 +1,19 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, redirect
 from flask_pymongo import pymongo
 from func import Excel
 from bson.json_util import dumps
+from werkzeug.utils import secure_filename
+import os
 
 SETTINGS = {
     
 }
 
+
 app = Flask(__name__, static_folder="static", template_folder="templates")
+
+ALLOWED_EXTENSIONS = set(['xlsx', 'csv', 'ods'])
+app.config['UPLOAD_FOLDER'] = "media"
 
 CONNECTION_STRING = "mongodb+srv://ivan:sarampion25@cluster0-s8nin.mongodb.net/test?retryWrites=true&w=majority"
 client = pymongo.MongoClient(CONNECTION_STRING)
@@ -17,11 +23,11 @@ pages_collection = pymongo.collection.Collection(db, 'pages')
 data_collection = pymongo.collection.Collection(db, 'data')
 rows_collection = pymongo.collection.Collection(db, 'rows')
 
-def to_db(src="ArchivosP.xlsx"):
-    db.drop_collection("documents")
-    db.drop_collection("pages")
-    db.drop_collection("data")
-    db.drop_collection("rows")
+def to_db(src):
+    #db.drop_collection("documents")
+    #db.drop_collection("pages")
+    #db.drop_collection("data")
+    #db.drop_collection("rows")
     
     excel = Excel(src)
 
@@ -81,31 +87,37 @@ def to_db(src="ArchivosP.xlsx"):
 def home():
     return render_template("index.html")
 
-@app.route("/load_database", methods=['POST'])
-def load_database():
-    # check if the post request has the file part
-    if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    file = request.files['file']
-    # if user does not select file, browser also
-    # submit an empty part without filename
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('uploaded_file',
-                                filename=filename))
-    to_db()
+def allowed_file(filename):
+	return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/load_database_w', methods=['POST'])
+def load_database_w():
+    to_db("ArchivosP.xlsx")
     return jsonify({"response": "ok"})
+
+@app.route('/load_database', methods=['POST'])
+def load_database():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return redirect('tables')
+        file = request.files['file']
+        if file.filename == '':
+            return redirect('tables')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            to_db(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect('tables')
+        else:
+            return redirect('tables')
 
 @app.route("/tables", methods=['GET'])
 def tables():
+    documents = documents_collection.find({})
     pages = pages_collection.find({})
     return render_template("tables.html", 
-                            pages = pages)
+                            pages = pages,
+                            documents = documents)
 
 @app.route("/page", methods=['POST'])
 def rows():
