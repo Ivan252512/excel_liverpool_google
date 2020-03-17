@@ -21,6 +21,94 @@
   <!-- Custom styles for this page -->
   <link href="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
 
+  <style>
+    .lds-roller {
+      display: inline-block;
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    .lds-roller div {
+      animation: lds-roller 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      transform-origin: 40px 40px;
+    }
+    .lds-roller div:after {
+      content: " ";
+      display: block;
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #cef;
+      margin: -4px 0 0 -4px;
+    }
+    .lds-roller div:nth-child(1) {
+      animation-delay: -0.036s;
+    }
+    .lds-roller div:nth-child(1):after {
+      top: 63px;
+      left: 63px;
+    }
+    .lds-roller div:nth-child(2) {
+      animation-delay: -0.072s;
+    }
+    .lds-roller div:nth-child(2):after {
+      top: 68px;
+      left: 56px;
+    }
+    .lds-roller div:nth-child(3) {
+      animation-delay: -0.108s;
+    }
+    .lds-roller div:nth-child(3):after {
+      top: 71px;
+      left: 48px;
+    }
+    .lds-roller div:nth-child(4) {
+      animation-delay: -0.144s;
+    }
+    .lds-roller div:nth-child(4):after {
+      top: 72px;
+      left: 40px;
+    }
+    .lds-roller div:nth-child(5) {
+      animation-delay: -0.18s;
+    }
+    .lds-roller div:nth-child(5):after {
+      top: 71px;
+      left: 32px;
+    }
+    .lds-roller div:nth-child(6) {
+      animation-delay: -0.216s;
+    }
+    .lds-roller div:nth-child(6):after {
+      top: 68px;
+      left: 24px;
+    }
+    .lds-roller div:nth-child(7) {
+      animation-delay: -0.252s;
+    }
+    .lds-roller div:nth-child(7):after {
+      top: 63px;
+      left: 17px;
+    }
+    .lds-roller div:nth-child(8) {
+      animation-delay: -0.288s;
+    }
+    .lds-roller div:nth-child(8):after {
+      top: 56px;
+      left: 12px;
+    }
+    @keyframes lds-roller {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+  </style>
+
 </head>
 
 <body id="page-top">
@@ -269,6 +357,9 @@
               <select id="documents" class="custom-select custom-select-sm form-control form-control-sm">
               </select>
             </div>
+            <div class="col-md-3">
+              <div class="lds-roller" id="load"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
           </div>
 
           <div class="row">
@@ -416,23 +507,46 @@
   <script>
     $( document ).ready(function() {
 
+        $("#load").hide();
 
         $("#documents").html(
           "<option value={{ documents[0]['name'] }} selected >{{ documents[0]['name'] }}</option>"+
-          "{% for doc in documents[1:] %}"+
+          "{% for doc in documents %}"+
             "<option value={{ doc['name'] }}>{{ doc['name'] }}</option>"+
           "{% endfor %}"
         );
 
-        $("#pages").html(
-          "<option value={{ pages[0]['name'] }} selected >{{ pages[0]['name'] }}</option>"+
-          "{% for page in pages[1:] %}"+
-            "<option value={{ page['name'] }}>{{ page['name'] }}</option>"+
-          "{% endfor %}"
-        );
+      function showPages(doc){
+        $("#load").show();
+        var search = {
+          "document":doc
+        } 
+
+        $.ajax({
+            url: "{{ url_for('documents') }}",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(search)
+        }).done(function(data) {
+
+          if (data.length<=0) {
+            return;
+          }
+
+          var pages = ""; 
+          data.forEach(k => {
+            pages += "<option value="+k["name"]+">"+k["name"]+"</option>";
+          });
+
+          $("#pages").html(
+            pages
+          );
+          $("#load").hide();
+        });
+        }
 
         function showTable(page, row, text) {
-
+          $("#load").show();
           var search = {
             "page":page
           } 
@@ -483,11 +597,16 @@
             $("#tb").html(
               values
             );
+            $("#load").hide();
           });
         }
 
-        var page = $( "#pages option:selected" ).text();
-        showTable(page, null, null);
+        var doc = $( "#documents option:selected" ).text();
+        showPages(doc);
+
+        $("#documents").on('change', function(){
+          showPages(this.value)
+        })
 
         $("#pages").on('change', function(){
           showTable(this.value, null, null)

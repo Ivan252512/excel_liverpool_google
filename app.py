@@ -5,6 +5,7 @@ from bson.json_util import dumps
 from werkzeug.utils import secure_filename
 import os
 
+
 SETTINGS = {
     
 }
@@ -92,7 +93,7 @@ def allowed_file(filename):
 
 @app.route('/load_database_w', methods=['POST'])
 def load_database_w():
-    to_db("ArchivosP.xlsx")
+    to_db("CUENTAS_FUN_SOCIEDADES.xlsx")
     return jsonify({"response": "ok"})
 
 @app.route('/load_database', methods=['POST'])
@@ -114,10 +115,16 @@ def load_database():
 @app.route("/tables", methods=['GET'])
 def tables():
     documents = documents_collection.find({})
-    pages = pages_collection.find({})
     return render_template("tables.html", 
-                            pages = pages,
                             documents = documents)
+
+@app.route('/documents', methods=['POST'])
+def documents():
+    content = request.get_json(silent=True)
+    document = content["document"]
+    page = pages_collection.find({"document":document}, {'_id': False})
+    print(page)
+    return Response(dumps(page), mimetype='application/json')
 
 @app.route("/page", methods=['POST'])
 def rows():
