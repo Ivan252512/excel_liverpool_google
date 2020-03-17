@@ -378,16 +378,10 @@
             </div>
           </div>
 
+          <div class="row" id="rows">
+          </div>
+
           <div class="row">
-            <div class="col-md-3">
-              <label for="rows">Selecciona una columna:</label>
-              <select id="rows" class="custom-select custom-select-sm form-control form-control-sm">
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label for="search_text">Introduce el valor a buscar:</label>
-              <input type="text" name="search_text" id="search_text" class="custom-text custom-text-sm form-control form-control-sm">
-            </div>
             <div class="col-md-3">
               <label for="search">Consultar:</label>
               <button id="search" class="btn btn-outline-primary custom-button-sm form-control form-control-sm">Consultar</button>
@@ -545,15 +539,9 @@
         });
         }
 
-        function showTable(page, row, text) {
+        function showTable(page, search) {
           $("#load").show();
-          var search = {
-            "page":page
-          } 
-          if (!(text==null || row==null)) {
-            search["row"] = row;
-            search["value"] = text;
-          }
+          search["page"] = page
 
           $.ajax({
               url: "{{ url_for('rows') }}",
@@ -568,10 +556,18 @@
 
             var keys = ""; 
             var rows = ""
+            var keys_l = []
             Object.keys(data[0]).forEach(k => {
               keys += "<th>"+k+"</th>";
-              rows += "<option value="+k+">"+k+"</option>";
+              rows +=             
+                '<div class="col-md-3">'+
+                  '<label for="'+k+'"> Buscar en '+k+':</label>'+
+                  '<input type="text" name="'+k+'" id="'+k+'" class="custom-text custom-text-sm form-control form-control-sm">'+
+                '</div>';
+              keys_l.push(k);
             });
+
+            window.keys_list = keys_l;
 
             $("#th").html(
               keys
@@ -609,15 +605,21 @@
         })
 
         $("#pages").on('change', function(){
-          showTable(this.value, null, null)
+          showTable(this.value, {})
         })
 
         $("#search").on('click', function(){
+          var search = {
+
+          }
+
+          window.keys_list.forEach(e => {
+            if  ( e!=null && $( "#"+String(e) ).val()!=null)
+              search[e] = $( "#"+String(e) ).val();
+          });
+
           var page = $( "#pages option:selected" ).text();
-          var row = $( "#rows option:selected" ).text();
-          var text = $( "#search_text" ).val();
-          console.log(text);
-          showTable(page, row, text);
+          showTable(page, search);
         });
 
         $("#excel_upload_button").on('click', function(){

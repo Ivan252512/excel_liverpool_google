@@ -129,13 +129,7 @@ def documents():
 @app.route("/page", methods=['POST'])
 def rows():
     content = request.get_json(silent=True)
-    page = content['page']
-    row = content['row'] if 'row' in content else None
-    value = content['value'] if 'value' in content else None
-    if row!=None and value!=None:
-        data = data_collection.find({"page":page, row:value}, {'_id': False, "page":False})
-    else:
-        data = data_collection.find({"page":page}, {'_id': False, "page":False})
+    data = data_collection.find(content, {'_id': False, "page":False})
     return Response(dumps(data), mimetype='application/json')
 
 if __name__ == "__main__":
