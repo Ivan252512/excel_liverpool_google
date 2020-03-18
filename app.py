@@ -120,15 +120,15 @@ def tables():
 
 @app.route('/documents', methods=['POST'])
 def documents():
-    content = request.get_json(silent=True)
+    content = request.get_json()
     document = content["document"]
     page = pages_collection.find({"document":document}, {'_id': False})
-    print(page)
     return Response(dumps(page), mimetype='application/json')
 
-@app.route("/page", methods=['POST'])
+@app.route("/rows", methods=['POST'])
 def rows():
-    content = request.get_json(silent=True)
+    content = request.get_json()
+    print(content)
     data = data_collection.find(content, {'_id': False, "page":False})
     return Response(dumps(data), mimetype='application/json')
 

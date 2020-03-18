@@ -513,7 +513,7 @@
       function showPages(doc){
         $("#load").show();
         var search = {
-          "document":doc
+          "document":String(doc)
         } 
 
         $.ajax({
@@ -541,7 +541,7 @@
 
         function showTable(page, search) {
           $("#load").show();
-          search["page"] = page
+          search["page"] = String(page)
 
           $.ajax({
               url: "{{ url_for('rows') }}",
@@ -612,13 +612,14 @@
           var search = {
 
           }
-
+          
           window.keys_list.forEach(e => {
-            if  ( e!=null && $( "#"+String(e) ).val()!=null)
-              search[e] = $( "#"+String(e) ).val();
+            if  ( e!=null &&  document.getElementById(e).value!="" && document.getElementById(e).value!=null)
+              search[String(e)] = document.getElementById(e).value;
           });
 
           var page = $( "#pages option:selected" ).text();
+          console.log(search)
           showTable(page, search);
         });
 
