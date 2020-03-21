@@ -68,9 +68,12 @@ def allowed_file(filename):
 def home():
     return render_template("index.html")
 
-@app.route("/tables", methods=['GET'])
+@app.route("/tables", methods=['GET', 'POST'])
 def tables():
     content = request.get_json()
+
+    print(content)
+
     """
     document = content["document"] if "document" in content.keys() else None
     sheet = content["sheet"] if "sheet" in content.keys() else None
@@ -128,8 +131,6 @@ def load_database():
             return redirect('tables')
         else:
             return redirect('tables')
-
-
 
 if __name__ == "__main__":
     app.run()

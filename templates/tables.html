@@ -297,26 +297,10 @@
             </div>
           </div>
 
-          <div class="row" id="rows">
-            {% if cols_values %}
-              {% for col in cols_values %}
-                <div class="col-md-3">
-                  <label for="{{col[0]}}">{{col[0]}}:</label>
-                  <select id="{{col[0]}}" class="custom-select custom-select-sm form-control form-control-sm">
-                    <option value="---------------------" selected>---------------------</option>
-                    {% for value in col[1] %}
-                      <option value="{{ value }}">{{ value }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              {% endfor %}
-            {% endif %}   
-          </div>
-
           <div class="row">
             <div class="col-md-3">
-              <label for="search">Consultar:</label>
-              <button id="search" class="btn btn-outline-primary custom-button-sm form-control form-control-sm">Consultar</button>
+              <label for="column_filter">Filtrar por columna:</label>
+              <button id="column_filter" class="btn btn-outline-success custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#filterModal">Filtrar</button>
             </div>
           </div>
 
@@ -380,6 +364,43 @@
     </div>
   </div>
 
+  <!-- Filter Modal-->
+  <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Filtrar por columna</h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form action="" method="POST" id="search_form">
+            <div class="row" id="rows">
+              {% if cols_values %}
+                {% for col in cols_values %}
+                  <div class="col-md-3">
+                    <label for="{{col[0]}}">{{col[0]}}:</label>
+                    <select id="{{col[0]}}" class="custom-select custom-select-sm form-control form-control-sm" form="search_form">
+                      <option value="---------------------" selected>---------------------</option>
+                      {% for value in col[1] %}
+                        <option value="{{ value }}">{{ value }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </form> 
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+          <button id="search_button" class="btn btn-outline-primary custom-button-sm form-control form-control-sm">Consultar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Excel Modal-->
   <div class="modal fade" id="excelModal" tabindex="-1" role="dialog" aria-labelledby="excelModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -420,6 +441,27 @@
 
   <script>
     $( document ).ready(function() {
+
+      $("#search_button").on('click', function(){
+        var elements = document.getElementById("search_form").elements;
+        search = {
+
+        }
+        for (let i = 0; i < elements.length; i++) {
+          const e = elements[i];
+          if (e.value!="---------------------") {
+            search[e.id] = e.value;
+          }
+        }
+        $.ajax({
+          url: "{{ url_for('tables') }}",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify(search)
+        }).done(function(data) {
+        });
+      });
+
       $("#excel_upload_button").on('click', function(){
         $(this).prop('disabled', true); 
         $(this).html("Cargando...");
