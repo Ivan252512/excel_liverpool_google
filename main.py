@@ -15,6 +15,8 @@ app = Flask(__name__, static_folder="static", template_folder="templates")
 CLOUD_STORAGE_BUCKET = "liverpoolexcelprueba.appspot.com"
 #os.environ['CLOUD_STORAGE_BUCKET']
 
+ALLOWED_EXTENSIONS = {'xlsx', 'csv', 'ods'}
+
 CONNECTION_STRING = "mongodb+srv://ivan:sarampion25@cluster0-s8nin.mongodb.net/test?retryWrites=true&w=majority"
 client = pymongo.MongoClient(CONNECTION_STRING, maxPoolSize=10000)
 db = client.get_database('excel')
@@ -31,32 +33,33 @@ class Excel():
         self.sheet = None
         self.page = None
         self.row_v_l =[]
+        documents_collection.insert_one({"name": src})
+        for i in self.get_pages():
+            pages_collection.insert_one({"document": src, "page":str(i)})
+        self.save_columns()
+
+
 
     def get_pages(self):
         return self.excel.sheetnames
 
-    def load_as_array(self):
+    def save_columns(self):
         all_columns = []
         for j in self.get_pages():
-            sheet_column = [j, []]
             sheet = self.excel[j]
-            sheet_column[1].append(["vacio"])
-            for i in range(1,sheet.max_row):
-                sheet_column[1].append([cell.value for cell in sheet[i]])
-            all_columns.append(sheet_column)
-        return all_columns   
-
+            row_to_save = {
+                "page" : str(j),
+            }
+            for cell in sheet[1]:
+                if True:
+                    row_to_save[str(cell.value)]=str(cell.value)
+            rows_collection.insert_one(row_to_save)
 
     def _process_page(self, i):
         if i==1:
             self.row_v_l =[]
-            row_to_save = {
-                "page" : str(self.page),
-            }
             for cell in self.sheet[1]:
-                row_to_save[str(cell.value)]=str(cell.value)
                 self.row_v_l.append(str(cell.value))
-            rows_collection.insert_one(row_to_save)
         else:
             data_to_save = {
                 "page": str(self.page),
@@ -64,97 +67,35 @@ class Excel():
             cont_r = 0
             for cell in self.sheet[i]:
                 if cont_r<len(self.row_v_l):
-                    data_to_save[self.row_v_l[cont_r]]=str(cell.value)
+                    data_to_save[str(cell.value)]=str(cell.value)
                 cont_r+=1
             data_collection.insert_one(data_to_save)
-
+            
     def load_to_db(self):
-        documents_to_save = {
-            "name" : self.name
-        }
-
-        documents_collection.insert_one(documents_to_save)
-
         for j in self.get_pages():
-            self.page = j
-            pages_to_save = {
-                "document" : self.name,
-                "page": str(j)
-            }
-            pages_collection.insert_one(pages_to_save)
-
+            self.page = str(j)
             self.sheet = self.excel[self.page]
-
-            try:
-                pool = Pool()
-                pool.map(self._process_page, range(1,self.sheet.max_row))
-            except Exception as e:
-                print(e)
-            finally: 
-                pool.close()
-                pool.join()
-
-
-
-def to_db(src):
-    #db.drop_collection("documents")
-    #db.drop_collection("pages")
-    #db.drop_collection("data")
-    #db.drop_collection("rows")
-    
-    excel = Excel(src)
-
-    all_columns = excel.load_as_array()
-
-    documents_to_save = {
-        "name" : str(src)
-    }
-
-    documents_collection.insert_one(documents_to_save)
-    del documents_to_save
-
-    sig=False
-    title = []
-    for i in all_columns:
-        pages_to_save = {
-            "document" : str(src),
-            "name": ""
-        }
-        pages_to_save["name"] = str(i[0])
-        pages_collection.insert_one(pages_to_save)
-        del pages_to_save
-        for j in i[1]:
-            row_to_save = {
-                "page" : ""
-            }
-            data_to_save = {
-                "page" : ""
-            }
-            if sig:
-                title = j
-                sig=False
-            if j[0] == "vacio":
-                sig=True
-            else:
-                is_row_title = False
-                row_to_save["page"] = str(i[0])
-                data_to_save["page"] = str(i[0])
-                for x in range(len(title)):
-                    if str(title[x]) == str(j[x]):
-                        row_to_save[str(title[x])] = str(j[x])
-                        is_row_title = True
-                    else:
-                        data_to_save[str(title[x])] = str(j[x])
-                        is_row_title = False
-                if is_row_title:
-                    if "None" in row_to_save and len(row_to_save)<3:
-                        del row_to_save
-                    else:
-                        rows_collection.insert_one(row_to_save)
-                        del row_to_save
+            for i in range(1,self.sheet.max_row):
+                if i==1:
+                    self.row_v_l =[]
+                    for cell in self.sheet[1]:
+                        self.row_v_l.append(str(cell.value))
                 else:
-                    data_collection.insert_one(data_to_save)
-                    del data_to_save
+                    data_to_save = {
+                        "page": str(self.page),
+                    }
+                    cont_r = 0
+                    for cell in self.sheet[i]:
+                        if cont_r<len(self.row_v_l):
+                            data_to_save[str(cell.value)]=str(cell.value)
+                        cont_r+=1
+                    try:
+                        print(data_to_save)
+                        data_collection.insert_one(data_to_save)
+                    except Exception as e:
+                        print(e)
+
+
 
 @app.route("/", methods=['GET'])
 def home():
@@ -195,19 +136,24 @@ def load_database():
             )
 
             documents_collection.insert_one({"name": filename, 
-                                         "url": blob.public_url})
+                                             "url": blob.public_url})
+            excel = Excel(file)
+            excel.load_to_db()
             return redirect('tables')
         else:
             return redirect('tables')
 
 @app.route("/tables", methods=['GET'])
 def tables():
-    documents = documents_collection.find({})
-    return render_template("tables.html", 
-                            documents = documents)
+    return render_template("tables.html")
 
-@app.route('/documents', methods=['POST'])
+@app.route('/documents', methods=['GET'])
 def documents():
+    documents = documents_collection.find({}, {'_id': False})
+    return Response(dumps(documents), mimetype='application/json')
+
+@app.route('/pages', methods=['POST'])
+def pages():
     content = request.get_json()
     document = content["document"]
     page = pages_collection.find({"document":document}, {'_id': False})
