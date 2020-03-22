@@ -312,7 +312,7 @@
               <h6 class="m-0 font-weight-bold text-primary">Datos</h6>
             </div>
             <div class="card-body">
-              <div class="table-responsive">
+              <div class="table-responsive" id="table">
                   {{ table|safe }}
               </div>
             </div>
@@ -454,11 +454,13 @@
           }
         }
         $.ajax({
-          url: "{{ url_for('tables') }}",
+          url: "{{ url_for('tables_filter') }}",
           type: "POST",
           contentType: "application/json",
-          data: JSON.stringify(search)
+          data: JSON.stringify(search),
+          async: false
         }).done(function(data) {
+          $("#table").html(data);
         });
       });
 
