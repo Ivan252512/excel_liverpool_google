@@ -51,7 +51,7 @@
 
       <!-- Nav Item - Tables -->
       <li class="nav-item active">
-        <a class="nav-link" href="{{ url_for('tables') }}">
+        <a class="nav-link" href="{{ url_for('tables', document='CUENTAS_FUN_SOCIEDADES.xlsx', sheet='CUENTAS') }}">
           <i class="fas fa-fw fa-table"></i>
           <span>Tablas</span></a>
       </li>
@@ -264,43 +264,66 @@
           <h1 class="h3 mb-2 text-gray-800">Tablas</h1>
 
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label for="documents">Selecciona un documento:</label>
               <select id="documents" class="custom-select custom-select-sm form-control form-control-sm">
                 {% if documents %}
                   {% for document in documents %}
-                    <option value="{{ document }}">{{ document }}</option>
+                    {% if document.url %}
+                      {% if document.name == document_selected %}
+                        <option value="{{ document.name }}" selected>{{ document.name }}</option>
+                      {% else %}
+                        <option value="{{ document.name }}" >{{ document.name }}</option>
+                      {% endif %}
+                    {% endif %}
                   {% endfor %}
                 {% endif %}
               </select>
             </div>
+            <div class="col-md-4">
+              <label for="reload">Cargar nuevo archivo:</label>
+              <button id="reload" class="btn btn-success custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#excelModal">Subir excel</button>
+            </div>
+            <div class="col-md-4">
+              <label for="drop_db">Eliminar todos:</label>
+              <a id="drop_db" class="btn btn-danger custom-button-sm form-control form-control-sm" href="{{ url_for('drop_database') }}">Eliminar</a>
+            </div>
           </div>
 
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label for="pages">Selecciona una página:</label>
               <select id="pages" class="custom-select custom-select-sm form-control form-control-sm">
                 {% if sheets %}
+                  <option value="Seleccionar" selected>Seleccionar</option>
                   {% for sheet in sheets %}
-                    <option value="{{ sheet }}">{{ sheet }}</option>
+                    {% if sheet == sheet_selected %}
+                      <option value="{{ sheet }}" selected>{{ sheet }}</option>
+                    {% else %}
+                      <option value="{{ sheet }}">{{ sheet }}</option>
+                    {% endif %}
                   {% endfor %}
                 {% endif %}
               </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label for="reload">Recargar página:</label>
-              <button id="reload" onclick="location.reload();" class="btn btn-outline-warning custom-button-sm form-control form-control-sm">Recargar</button>
+              <button id="reload" onclick="location.reload();" class="btn btn-success custom-button-sm form-control form-control-sm">Recargar</button>
             </div>
-            <div class="col-md-3">
-              <label for="reload">Cargar nuevo archivo:</label>
-              <button id="reload" class="btn btn-outline-success custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#excelModal">Subir excel</button>
+            <div class="col-md-4">
+              <label for="download_file">Descargar archivos:</label>
+              <button id="download_file" class="btn btn-light custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#downloadModal">Mostrar archivos</button>
             </div>
           </div>
 
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-6" id="consultar_pagina">
+              <label for="consultar">Consultar página:</label>
+              <button id="consultar" class="btn btn-primary custom-button-sm form-control form-control-sm">Consultar</button>
+            </div>
+            <div class="col-md-6">
               <label for="column_filter">Filtrar por columna:</label>
-              <button id="column_filter" class="btn btn-outline-success custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#filterModal">Filtrar</button>
+              <button id="column_filter" class="btn btn-info custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#filterModal">Filtrar</button>
             </div>
           </div>
 
@@ -316,6 +339,7 @@
                   {{ table|safe }}
               </div>
             </div>
+            <input type="button" name="btnExportar" id="btnExportar" value="Exportar a Excel" />
           </div>
 
         </div>
@@ -395,7 +419,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
-          <button id="search_button" class="btn btn-outline-primary custom-button-sm form-control form-control-sm">Consultar</button>
+          <button id="search_button" class="btn btn-primary custom-button-sm form-control form-control-sm">Consultar</button>
         </div>
       </div>
     </div>
@@ -410,12 +434,36 @@
         </div>
         <div class="modal-body">
           <form action="{{ url_for( 'load_database' ) }}" method="POST" id="excel_upload" enctype="multipart/form-data">
-            <input type="file" name="file" id="file" class="custom-button custom-button-sm form-control form-control-sm">
+            <input type="file" accept=".xls,.xlsx" name="file" id="file" class="custom-button custom-button-sm form-control form-control-sm">
           </form>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" type="button" id="excel_upload_button_cancel" data-dismiss="modal">Cancelar</button>
           <button class="btn btn-primary" type="submit" id="excel_upload_button">Cargar Archivo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Download Modal-->
+  <div class="modal fade" id="downloadModal" tabindex="-1" role="dialog" aria-labelledby="downloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="downloadModalLabel">Descargar excel</h5>
+        </div>
+        <div class="modal-body">
+          {% if documents2 %}
+            {% for document2 in documents2 %}
+              {% if document2.url %}
+                <a href="{{ document2.url }}">{{ document2.name }}</a>
+                <br>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" id="excel_upload_button_cancel" data-dismiss="modal">Cerrar</button>
         </div>
       </div>
     </div>
@@ -445,7 +493,6 @@
       $("#search_button").on('click', function(){
         var elements = document.getElementById("search_form").elements;
         search = {
-
         }
         for (let i = 0; i < elements.length; i++) {
           const e = elements[i];
@@ -453,15 +500,49 @@
             search[e.id] = e.value;
           }
         }
+
+        var documentSelected = $("option:selected", $("#documents")).val();
+        var pageSelected = $("option:selected", $("#pages")).val();
+
         $.ajax({
-          url: "{{ url_for('tables_filter') }}",
+          url: "/tables_filter/"+documentSelected+"/"+pageSelected,
           type: "POST",
           contentType: "application/json",
           data: JSON.stringify(search),
-          async: false
         }).done(function(data) {
+          $('#filterModal').modal('hide');
           $("#table").html(data);
         });
+      });
+
+      $("#documents").on('change', function (e) {
+        var documentSelected = $("option:selected", $("#documents")).val();
+        if (documentSelected!="Seleccionar") {
+          $.ajax({
+            url: "/get_pages/"+documentSelected,
+            type: "GET",
+            contentType: "application/json",
+          }).done(function(data) {
+            console.log(data);
+            if (data.length<=0) {
+              return;
+            }
+            var pages = ""; 
+            for (var k in data) {
+              pages += "<option value="+data[k]+">"+data[k]+"</option>";
+            }
+
+            $("#pages").html(
+              pages
+            );
+          });
+        };
+      }); 
+
+      $("#consultar").on('click', function (e) {
+          var documentSelected = $("option:selected", $("#documents")).val();
+          var pageSelected = $("option:selected", $("#pages")).val();
+          window.location = "/tables/"+documentSelected+"/"+pageSelected;
       });
 
       $("#excel_upload_button").on('click', function(){
@@ -470,6 +551,37 @@
         $("#excel_upload_button").prop('disabled', true); 
         $("#excel_upload").submit();
       });
+
+      function ExportToExcel(htmlExport) {
+          var ua = window.navigator.userAgent;
+          var msie = ua.indexOf("MSIE ");
+          
+          //other browser not tested on IE 11
+          // If Internet Explorer
+          if (msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./))
+          {
+              jQuery('body').append(" <iframe id=\"iframeExport\" style=\"display:none\"></iframe>");
+              iframeExport.document.open("txt/html", "replace");
+              iframeExport.document.write(htmlExport);
+              iframeExport.document.close();
+              iframeExport.focus();
+              sa = iframeExport.document.execCommand("SaveAs", true, "List.xls");
+          }
+          else {      
+              var link = document.createElement('a');
+          
+              document.body.appendChild(link); // Firefox requires the link to be in the body
+              link.download = "List.xls";
+              link.href = 'data:application/vnd.ms-excel,' + escape(htmlExport);
+              link.click();
+              document.body.removeChild(link);
+          }
+      }
+
+      $("#btnExportar").on('click', function() {
+        ExportToExcel($('#dataTable').prop("outerHTML"));
+      });
+
     });
   </script>
 

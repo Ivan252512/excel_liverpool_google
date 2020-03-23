@@ -13,4 +13,4 @@ handlers:
   script: auto
 
 env_variables:
-    CLOUD_STORAGE_BUCKET: liverpoolexcelprueba.appspot.com
+    CLOUD_STORAGE_BUCKET: liverpool-excel.appspot.com

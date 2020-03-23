@@ -12,10 +12,10 @@ from openpyxl import load_workbook
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
 # Configure this environment variable via app.yaml
-CLOUD_STORAGE_BUCKET = "liverpoolexcelprueba.appspot.com"
+CLOUD_STORAGE_BUCKET = "liverpool-excel.appspot.com"
 #os.environ['CLOUD_STORAGE_BUCKET']
 
-ALLOWED_EXTENSIONS = {'xlsx', 'csv', 'ods'}
+ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
 
 CONNECTION_STRING = "mongodb+srv://ivan:sarampion25@cluster0-s8nin.mongodb.net/test?retryWrites=true&w=majority"
 client = pymongo.MongoClient(CONNECTION_STRING, maxPoolSize=10000)
@@ -23,11 +23,27 @@ db = client.get_database('excel')
 documents_collection = pymongo.collection.Collection(db, 'documents')
 
 class Excel():
-    def __init__(self, src):
-        self.df = pd.read_excel(src, None)
-        self.name = src
-        self.sheets = self.df.keys()
+    def __init__(self, name, url=None):
+        self.url = url
+        self.name = name
+        try:
+            self.df = pd.read_excel(url, None)
+        except ValueError:
+            self.df = pd.read_excel("CUENTAS_FUN_SOCIEDADES.xlsx", None)
+        finally:
+            self.sheets = self.df.keys()
 
+
+    def load_to_db(self):
+        sheets = {}
+        k = 0
+        for i in self.sheets:
+            s = "sheet_"+str(k)
+            sheets[s] = i
+            k+=1
+        documents_collection.insert_one({"name": self.name , 
+                                         "url": self.url,
+                                         "sheets": sheets})
     def get_sheets(self):
         return self.sheets
 
@@ -40,6 +56,7 @@ class Excel():
         return df[column].unique()
 
     def filter(self, sheet, filters):
+        print(self.get_sheets())
         df = self.df[sheet]
         if type(sheet)==str and type(filters)==dict: 
             if len(filters)<1:
@@ -61,16 +78,27 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/tables", methods=['GET', 'POST'])
-def tables():
-    sheet = "CUENTAS"
-    document = "CUENTAS_FUN_SOCIEDADES.xlsx"
+@app.route("/tables/<document>/<sheet>", methods=['GET', 'POST'])
+def tables(document, sheet):
 
-    documents = [document]
-    sheets = [sheet]
+    documents = documents_collection.find({})
+    documents2 = documents_collection.find({})
 
-    excel = Excel(document)
-    doc, res = excel.filter(str(sheet),  1)
+    document_db = documents_collection.find_one({"name":document})
+
+    try:
+        sheets = list(document_db["sheets"].values())
+        excel = Excel(document_db["name"], document_db["url"])
+        if sheet == "CUENTAS" or sheet == "Seleccionar":
+            sheet = sheets[0]
+    except:
+        excel = Excel(document)
+        sheets = excel.get_sheets()
+
+    
+    doc, res = excel.filter(sheet,  1)
+
+    del excel
 
     cols_values = []
 
@@ -83,24 +111,24 @@ def tables():
     return render_template('tables.html',  
                             table=table,
                             documents=documents,
+                            documents2=documents2,
                             sheets=sheets,
+                            document_selected=document,
+                            sheet_selected=sheet,
                             cols_values=cols_values)
 
-@app.route("/tables_filter", methods=['GET', 'POST'])
-def tables_filter():
+@app.route("/get_pages/<document>", methods=['GET', 'POST'])
+def get_pages(document):
+    document = documents_collection.find_one({"name":document})
+    return Response(dumps(document["sheets"]), mimetype='application/json')
+
+@app.route("/tables_filter/<document>/<sheet>", methods=['GET', 'POST'])
+def tables_filter(document, sheet):
     content = request.get_json()
+    document_db = documents_collection.find_one({"name":document})
 
-    """
-    document = content["document"] if "document" in content.keys() else None
-    sheet = content["sheet"] if "sheet" in content.keys() else None
-    """
-    sheet = "CUENTAS"
-    document = "CUENTAS_FUN_SOCIEDADES.xlsx"
-
-    excel = Excel(document)
+    excel = Excel(document_db["name"], document_db["url"])
     doc, res = excel.filter(str(sheet),  content)
-
-    #print(doc)
 
     cols_values = []
 
@@ -138,11 +166,21 @@ def load_database():
                 content_type=file.content_type
             )
 
-            documents_collection.insert_one({"name": filename, 
-                                             "url": blob.public_url})
-            return redirect('tables')
-        else:
-            return redirect('tables')
+            excel = Excel(filename, blob.public_url)
+            excel.load_to_db()
+        return redirect("/tables/CUENTAS_FUN_SOCIEDADES.xlsx/CUENTAS")
+
+@app.route('/drop_database', methods=['GET'])
+def drop_database():
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(CLOUD_STORAGE_BUCKET)
+    blobs = bucket.list_blobs()
+    for blob in blobs:
+        blob.delete()
+
+    documents_collection.drop()
+
+    return redirect("/tables/CUENTAS_FUN_SOCIEDADES.xlsx/CUENTAS")
 
 if __name__ == "__main__":
     app.run()
