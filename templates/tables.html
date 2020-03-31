@@ -279,8 +279,8 @@
               </select>
             </div>
             <div class="col-md-4">
-              <label for="reload">Cargar nuevo archivo:</label>
-              <button id="reload" class="btn btn-success custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#excelModal">Subir excel</button>
+              <label for="upload_file">Cargar nuevo archivo:</label>
+              <button id="upload_file" class="btn btn-success custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#excelModal">Subir excel</button>
             </div>
             <div class="col-md-4">
               <label for="drop_db">Eliminar todos:</label>
@@ -305,22 +305,39 @@
             </div>
             <div class="col-md-4">
               <label for="reload">Recargar página:</label>
-              <button id="reload" onclick="location.reload();" class="btn btn-success custom-button-sm form-control form-control-sm">Recargar</button>
+              <button id="reload" onclick="location.reload();" class="btn btn-warning custom-button-sm form-control form-control-sm">Recargar</button>
             </div>
             <div class="col-md-4">
               <label for="download_file">Descargar archivos:</label>
-              <button id="download_file" class="btn btn-light custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#downloadModal">Mostrar archivos</button>
+              <button id="download_file" class="btn btn-dark custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#downloadModal">Mostrar archivos</button>
             </div>
           </div>
 
-          <div class="row">
-            <div class="col-md-6" id="consultar_pagina">
-              <label for="consultar">Consultar página:</label>
-              <button id="consultar" class="btn btn-primary custom-button-sm form-control form-control-sm">Consultar</button>
+          <br>
+
+          <form action="" method="POST" id="search_form">
+            <div class="row" id="rows">
+              {% if cols_values %}
+                {% for col in cols_values %}
+                  <div class="col-md-2">
+                    <label for="{{col[0]}}">{{col[0]}}:</label>
+                    <select id="{{col[0]}}" class="custom-select custom-select-sm form-control form-control-sm" form="search_form">
+                      <option value="---------------------" selected>---------------------</option>
+                      {% for value in col[1] %}
+                        <option value="{{ value }}">{{ value }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                {% endfor %}
+              {% endif %}
             </div>
-            <div class="col-md-6">
-              <label for="column_filter">Filtrar por columna:</label>
-              <button id="column_filter" class="btn btn-info custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#filterModal">Filtrar</button>
+          </form> 
+
+          <br>
+
+          <div class="row">
+            <div class="col-md-12">
+              <button id="search_button" class="btn btn-info custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#filterModal">Filtrar</button>
             </div>
           </div>
 
@@ -380,43 +397,6 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
           <a class="btn btn-primary" href="login.html">Logout</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Modal-->
-  <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Filtrar por columna</h5>
-          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <form action="" method="POST" id="search_form">
-            <div class="row" id="rows">
-              {% if cols_values %}
-                {% for col in cols_values %}
-                  <div class="col-md-3">
-                    <label for="{{col[0]}}">{{col[0]}}:</label>
-                    <select id="{{col[0]}}" class="custom-select custom-select-sm form-control form-control-sm" form="search_form">
-                      <option value="---------------------" selected>---------------------</option>
-                      {% for value in col[1] %}
-                        <option value="{{ value }}">{{ value }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            </div>
-          </form> 
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
-          <button id="search_button" class="btn btn-primary custom-button-sm form-control form-control-sm">Consultar</button>
         </div>
       </div>
     </div>
@@ -534,11 +514,17 @@
         };
       }); 
 
-      $("#consultar").on('click', function (e) {
-          var documentSelected = $("option:selected", $("#documents")).val();
-          var pageSelected = $("option:selected", $("#pages")).val();
-          window.location = "/tables/"+documentSelected+"/"+pageSelected;
+      $("#pages").on('change', function (e) { 
+        $("#documents").prop('disabled', true); 
+        $("#pages").prop('disabled', true); 
+        $("#download_file").prop('disabled', true);
+        $("#drop_db").prop('disabled', true);
+        $("#upload_file").prop('disabled', true);
+        var documentSelected = $("option:selected", $("#documents")).val();
+        var pageSelected = $("option:selected", $("#pages")).val();
+        window.location = "/tables/"+documentSelected+"/"+pageSelected;
       });
+
 
       $("#excel_upload_button").on('click', function(){
         $(this).prop('disabled', true); 
