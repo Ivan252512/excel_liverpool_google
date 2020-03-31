@@ -25,7 +25,7 @@ class Excel:
     def __init__(self, name):
         self.name = name
         try:
-            self.df = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com/media/"+name, None)
+            self.df = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+name, None)
         except:
             self.df = pd.read_excel("Seleccionar.xlsx", None)
         finally:
