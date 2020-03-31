@@ -27,11 +27,15 @@ Flask==1.1.1
 Flask-PyMongo==2.3.0
 Flask-RESTful==0.3.8
 future==0.16.0
+google-api-core==1.16.0
+google-auth==1.12.0
+google-cloud-core==1.3.0
 google-cloud-storage==1.26.0
 google-resumable-media==0.5.0
 googleapis-common-protos==1.51.0
 gunicorn==20.0.4
 idna==2.7
+importlib-metadata==1.6.0
 isort==4.3.21
 itsdangerous==1.1.0
 jdcal==1.4.1
@@ -46,6 +50,7 @@ openpyxl==3.0.3
 pandas==1.0.3
 paramiko==2.7.1
 pathspec==0.5.9
+pkg-resources==0.0.0
 protobuf==3.11.3
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
@@ -72,3 +77,4 @@ websocket-client==0.57.0
 Werkzeug==1.0.0
 wrapt==1.11.2
 xlrd==1.2.0
+zipp==3.1.0

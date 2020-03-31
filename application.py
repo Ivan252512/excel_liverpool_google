@@ -9,9 +9,8 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
-
-# Configure this environment variable via app.yaml
+application = Flask(__name__, static_folder="static", template_folder="templates")
+# Configure this environment variable via application.yaml
 AWS_BUCKET_NAME = "liverpoolexcel"
 UPLOAD_FOLDER = "media"
 
@@ -75,12 +74,12 @@ def upload_file(file_name, bucket):
     response = s3_client.upload_file(file_name, bucket, object_name)
     return response
 
-@app.route("/", methods=['GET'])
+@application.route("/", methods=['GET'])
 def home():
     return render_template("index.html")
 
 
-@app.route("/tables/<document>/<sheet>", methods=['GET', 'POST'])
+@application.route("/tables/<document>/<sheet>", methods=['GET', 'POST'])
 def tables(document, sheet):
 
     documents = documents_collection.find({})
@@ -105,7 +104,7 @@ def tables(document, sheet):
     cols_values = []
 
     for i in doc.keys():
-        cols_values.append([i, doc[i].unique()])
+        cols_values.applicationend([i, doc[i].unique()])
 
     table = doc.to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
@@ -119,12 +118,12 @@ def tables(document, sheet):
                             sheet_selected=sheet,
                             cols_values=cols_values)
 
-@app.route("/get_pages/<document>", methods=['GET', 'POST'])
+@application.route("/get_pages/<document>", methods=['GET', 'POST'])
 def get_pages(document):
     document = documents_collection.find_one({"name":document})
-    return Response(dumps(document["sheets"]), mimetype='application/json')
+    return Response(dumps(document["sheets"]), mimetype='applicationlication/json')
 
-@app.route("/tables_filter/<document>/<sheet>", methods=['GET', 'POST'])
+@application.route("/tables_filter/<document>/<sheet>", methods=['GET', 'POST'])
 def tables_filter(document, sheet):
     content = request.get_json()
     document_db = documents_collection.find_one({"name":document})
@@ -135,7 +134,7 @@ def tables_filter(document, sheet):
     cols_values = []
 
     for i in doc.keys():
-        cols_values.append([i, doc[i].unique()])
+        cols_values.applicationend([i, doc[i].unique()])
 
     table = doc.to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
@@ -143,7 +142,7 @@ def tables_filter(document, sheet):
     return table  
 
 
-@app.route('/load_database', methods=['POST'])
+@application.route('/load_database', methods=['POST'])
 def load_database():
     if request.method == 'POST':
         f = request.files['file']
@@ -154,7 +153,7 @@ def load_database():
         excel.load_to_db()
     return redirect("/tables/Seleccionar.xlsx/Seleccionar")
 
-@app.route('/drop_database', methods=['GET'])
+@application.route('/drop_database', methods=['GET'])
 def drop_database():
     s3 = boto3.resource('s3')
     for i in documents_collection.find({}):
@@ -163,5 +162,5 @@ def drop_database():
     return redirect("/tables/Seleccionar.xlsx/Seleccionar")
 
 if __name__ == "__main__":
-    app.debug = True
-    app.run()
+    application.debug = True
+    application.run()
