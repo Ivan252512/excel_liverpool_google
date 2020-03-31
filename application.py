@@ -147,7 +147,7 @@ def load_database():
     if request.method == 'POST':
         f = request.files['file']
         f.save(os.path.join(UPLOAD_FOLDER, f.filename))
-        upload_file(f"media/{f.filename}", AWS_BUCKET_NAME)
+        upload_file(f"/tmp/{f.filename}", AWS_BUCKET_NAME)
         os.remove(f"/tmp/{f.filename}")
         excel = Excel(f.filename)
         excel.load_to_db()
