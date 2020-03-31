@@ -104,7 +104,7 @@ def tables(document, sheet):
     cols_values = []
 
     for i in doc.keys():
-        cols_values.applicationend([i, doc[i].unique()])
+        cols_values.append([i, doc[i].unique()])
 
     table = doc.to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
@@ -121,7 +121,7 @@ def tables(document, sheet):
 @application.route("/get_pages/<document>", methods=['GET', 'POST'])
 def get_pages(document):
     document = documents_collection.find_one({"name":document})
-    return Response(dumps(document["sheets"]), mimetype='applicationlication/json')
+    return Response(dumps(document["sheets"]), mimetype='application/json')
 
 @application.route("/tables_filter/<document>/<sheet>", methods=['GET', 'POST'])
 def tables_filter(document, sheet):
@@ -134,7 +134,7 @@ def tables_filter(document, sheet):
     cols_values = []
 
     for i in doc.keys():
-        cols_values.applicationend([i, doc[i].unique()])
+        cols_values.append([i, doc[i].unique()])
 
     table = doc.to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
