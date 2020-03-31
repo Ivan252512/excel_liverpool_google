@@ -12,7 +12,7 @@ from botocore.exceptions import ClientError
 application = Flask(__name__, static_folder="static", template_folder="templates")
 # Configure this environment variable via application.yaml
 AWS_BUCKET_NAME = "liverpoolexcel"
-UPLOAD_FOLDER = "media"
+UPLOAD_FOLDER = "/tmp"
 
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
 
@@ -148,7 +148,7 @@ def load_database():
         f = request.files['file']
         f.save(os.path.join(UPLOAD_FOLDER, f.filename))
         upload_file(f"media/{f.filename}", AWS_BUCKET_NAME)
-        os.remove(f"media/{f.filename}")
+        os.remove(f"/tmp/{f.filename}")
         excel = Excel(f.filename)
         excel.load_to_db()
     return redirect("/tables/Seleccionar.xlsx/Seleccionar")
