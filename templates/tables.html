@@ -387,11 +387,11 @@
             </div>
             <div class="col-md-4">
               <label for="reload">Recargar página:</label>
-              <button id="reload" onclick="location.reload();" class="btn btn-warning custom-button-sm form-control form-control-sm">Recargar</button>
+              <button id="reload" onclick="location.reload();" class="btn btn-dark custom-button-sm form-control form-control-sm">Recargar</button>
             </div>
             <div class="col-md-4">
               <label for="download_file">Descargar archivos:</label>
-              <button id="download_file" class="btn btn-dark custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#downloadModal">Mostrar archivos</button>
+              <button id="download_file" class="btn btn-info custom-button-sm form-control form-control-sm" data-toggle="modal" data-target="#downloadModal">Mostrar archivos</button>
             </div>
           </div>
 
@@ -418,9 +418,6 @@
           <br>
 
           <div class="row">
-            <div class="col-md-12">
-              <button id="search_button" class="btn btn-info custom-button-sm form-control form-control-sm">Filtrar</button>
-            </div>
             <div class="col-md-12">
               <br>
               <input type="button" name="btnExportar" class="btn btn-success custom-button-sm form-control form-control-sm" id="btnExportar" value="Exportar a Excel" />
@@ -550,7 +547,12 @@
   <script>
     $( document ).ready(function() {
 
-      $("#search_button").on('click', function(){
+      var elements = document.getElementById("search_form").elements;
+      for (let i = 0; i < elements.length; i++) {
+        document.getElementById(String(elements[i].id)).addEventListener("change", search);;
+      }
+
+      function search(){
         var elements = document.getElementById("search_form").elements;
         search = {
         }
@@ -577,7 +579,7 @@
         }).done(function(data) {
           $("#table").html(data);
         });
-      });
+      };
 
       $("#documents").on('change', function (e) {
         var documentSelected = $("option:selected", $("#documents")).val();
