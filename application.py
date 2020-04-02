@@ -106,7 +106,7 @@ def tables(document, sheet):
     for i in doc.keys():
         cols_values.append([i, doc[i].unique()])
 
-    table = doc.to_html()
+    table = doc[0:200].to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
     
     return render_template('tables.html',  
@@ -136,7 +136,7 @@ def tables_filter(document, sheet):
     for i in doc.keys():
         cols_values.append([i, doc[i].unique()])
 
-    table = doc.to_html()
+    table = doc[0:200].to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
     
     return table  
