@@ -349,7 +349,7 @@
               <label for="documents">Selecciona un documento:</label>
               <select id="documents" class="custom-select custom-select-sm form-control form-control-sm">
                 {% if documents %}
-                  <option value="---------------------" selected>---------------------</option>
+                  <option value="Seleccionar" selected>Seleccionar</option>
                   {% for document in documents %}
                     {% if document.name == document_selected %}
                       <option value="{{ document.name }}" selected>{{ document.name }}</option>
@@ -404,7 +404,7 @@
                   <div class="col-md-2"> 
                     <label for="{{col[0]}}">{{col[0]}}:</label>
                     <select id="{{col[0]}}" class="custom-select custom-select-sm form-control form-control-sm" form="search_form">
-                      <option value="---------------------" selected>---------------------</option>
+                      <option value="Seleccionar" selected>Seleccionar</option>
                       {% for value in col[1] %}
                         <option value="{{ value }}">{{ value }}</option>
                       {% endfor %}
@@ -557,7 +557,7 @@
         }
         for (let i = 0; i < elements.length; i++) {
           const e = elements[i];
-          if (e.value!="---------------------") {
+          if (e.value!="Seleccionar") {
             search[e.id] = e.value;
           }
         }
@@ -592,11 +592,11 @@
             if (data.length<=0) {
               return;
             }
-            var pages = "<option value='---------------------' selected>---------------------</option>"; 
+            var pages = "<option value='Seleccionar' selected>Seleccionar</option>"; 
             for (var k in data) {
-              pages += "<option value="+data[k]+">"+data[k]+"</option>";
+              console.log(data[k]);
+              pages += `<option value="${data[k]}">${data[k]}</option>`;
             }
-
             $("#pages").html(
               pages
             );

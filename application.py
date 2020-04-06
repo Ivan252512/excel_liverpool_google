@@ -3,6 +3,9 @@ from flask_pymongo import pymongo
 from bson.json_util import dumps
 import os
 import pandas as pd
+import dask
+import dask.dataframe as dd
+from dask.delayed import delayed
 
 from openpyxl import load_workbook
 import logging
@@ -55,8 +58,9 @@ class Excel:
         return df[column].unique()
 
     def filter(self, sheet, filters):
-        print(self.get_sheets())
-        df = self.df[sheet]
+        parts = dask.delayed(self.df[sheet])
+        dfd = dd.from_delayed(parts)
+        df = dfd.compute()
         if type(sheet)==str and type(filters)==dict: 
             if len(filters)<1:
                 return df, 500
@@ -106,7 +110,7 @@ def tables(document, sheet):
     for i in doc.keys():
         cols_values.append([i, doc[i].unique()])
 
-    table = doc.to_html()
+    table = doc[:100].to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
     
     return render_template('tables.html',  
@@ -136,7 +140,7 @@ def tables_filter(document, sheet):
     for i in doc.keys():
         cols_values.append([i, doc[i].unique()])
 
-    table = doc.to_html()
+    table = doc[:100].to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
     
     return table  
