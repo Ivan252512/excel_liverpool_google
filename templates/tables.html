@@ -549,7 +549,7 @@
       function search_ready(){
         var elements = document.getElementById("search_form").elements;
         for (let i = 0; i < elements.length; i++) {
-          $(`[id="${String(elements[i].id)}"]`).on('change', search);
+          $( document ).on('change', `[id="${String(elements[i].id)}"]`, search);
         };
       };
 
@@ -562,7 +562,7 @@
         for (let i = 0; i < elements.length; i++) {
           const e = elements[i];
           if (e.value!="Seleccionar") {
-            search[e.id] = e.value;
+            search[e.id] = String(e.value);
           }
         }
 

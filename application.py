@@ -86,6 +86,9 @@ def home():
 @application.route("/tables/<document>/<sheet>", methods=['GET', 'POST'])
 def tables(document, sheet):
 
+    sheet = str(sheet).replace("'", "")
+    sheet = sheet.replace('"', "")
+
     documents = documents_collection.find({})
     documents2 = documents_collection.find({})
 
@@ -129,6 +132,9 @@ def get_pages(document):
 
 @application.route("/tables_filter/<document>/<sheet>", methods=['GET', 'POST'])
 def tables_filter(document, sheet):
+    sheet = str(sheet).replace("'", "")
+    sheet = sheet.replace('"', "")
+
     content = request.get_json()
     document_db = documents_collection.find_one({"name":document})
 
