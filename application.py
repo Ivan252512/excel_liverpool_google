@@ -140,10 +140,29 @@ def tables_filter(document, sheet):
     for i in doc.keys():
         cols_values.append([i, doc[i].unique()])
 
-    table = doc[:100].to_html()
+    table = doc.to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
     
-    return table  
+    cols = ""
+    if cols_values:
+        for col in cols_values:
+            val = ""
+            for value in col[1]:
+                if col[0] in content and str(value)==str(content[col[0]]):
+                    val+='<option value="{0}" selected>{0}</option>'.format(value)
+                else:
+                    val+='<option value="{0}">{0}</option>'.format(value)
+            cols += """
+                <div class="col-md-2"> 
+                <label for="{0}">{0}:</label>
+                <select id="{0}" class="custom-select custom-select-sm form-control form-control-sm" form="search_form">
+                    <option value="Seleccionar">Seleccionar</option>
+                    {1}
+                </select>
+                </div>
+            """.format(col[0], val)
+
+    return {"table":table, "cols":cols}
 
 
 @application.route('/load_database', methods=['POST'])
