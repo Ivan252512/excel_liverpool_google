@@ -24,13 +24,18 @@ client = pymongo.MongoClient(CONNECTION_STRING, maxPoolSize=10000)
 db = client.get_database('excel')
 documents_collection = pymongo.collection.Collection(db, 'documents')
 
+excels = {'seleccionar' : pd.read_excel("Seleccionar.xlsx", None)}
+
+for i in documents_collection.find({}):
+    excels[i['name']] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+i['name'], None)
+
 class Excel:
     def __init__(self, name):
         self.name = name
         try:
-            self.df = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+name, None)
+            self.df = excels[name]
         except:
-            self.df = pd.read_excel("Seleccionar.xlsx", None)
+            self.df = excels['seleccionar']
         finally:
             self.sheets = self.df.keys()
 
@@ -65,7 +70,7 @@ class Excel:
             if len(filters)<1:
                 return df, 500
             for i in filters.keys():
-                if filters[i].isnumeric():
+                if filters[i].isnumeric() and filters[i][0]!=0:
                     df =  df.loc[df[i] == int(filters[i])]
                 else: 
                     df =  df.loc[df[i] == filters[i]]
@@ -78,13 +83,13 @@ def upload_file(file_name, bucket):
     response = s3_client.upload_file(file_name, bucket, object_name)
     return response
 
-@application.route("/", methods=['GET'])
+
+@application.route("/", methods=['GET', 'POST'])
 def home():
-    return render_template("index.html")
+    return tables("Selecionar.xlsx", "Seleccionar", 100)
 
-
-@application.route("/tables/<document>/<sheet>", methods=['GET', 'POST'])
-def tables(document, sheet):
+@application.route("/<document>/<sheet>/<limit>", methods=['GET', 'POST'])
+def tables(document, sheet, limit):
 
     sheet = str(sheet).replace("'", "")
     sheet = sheet.replace('"', "")
@@ -113,7 +118,11 @@ def tables(document, sheet):
     for i in doc.keys():
         cols_values.append([i, doc[i].unique()])
 
-    table = doc[:100].to_html()
+    limit = int(limit)
+    if limit<=0:
+        limit = 100
+
+    table = doc[:limit].to_html()
     table = table.replace('<table border="1" class="dataframe">', '<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">')
     
     return render_template('tables.html',  
@@ -123,7 +132,8 @@ def tables(document, sheet):
                             sheets=sheets,
                             document_selected=document,
                             sheet_selected=sheet,
-                            cols_values=cols_values)
+                            cols_values=cols_values,
+                            limit=limit)
 
 @application.route("/get_pages/<document>", methods=['GET', 'POST'])
 def get_pages(document):
