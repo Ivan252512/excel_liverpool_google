@@ -27,7 +27,7 @@ documents_collection = pymongo.collection.Collection(db, 'documents')
 excels = {'seleccionar' : pd.read_excel("Seleccionar.xlsx", None)}
 
 for i in documents_collection.find({}):
-    excels[i['name']] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+i['name'], None)
+    excels[i['name']] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+i['name'], None, dtype=str)
 
 class Excel:
     def __init__(self, name):
@@ -70,10 +70,7 @@ class Excel:
             if len(filters)<1:
                 return df, 500
             for i in filters.keys():
-                if filters[i].isnumeric() and filters[i][0]!=0:
-                    df =  df.loc[df[i] == int(filters[i])]
-                else: 
-                    df =  df.loc[df[i] == filters[i]]
+                df =  df.loc[df[i] == filters[i]]
             return df, 200
         return df, 500
 
@@ -188,6 +185,7 @@ def load_database():
         f.save(os.path.join(UPLOAD_FOLDER, f.filename))
         upload_file(f"/tmp/{f.filename}", AWS_BUCKET_NAME)
         os.remove(f"/tmp/{f.filename}")
+        excels[f.filename] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+f.filename, None, dtype=str)
         excel = Excel(f.filename)
         excel.load_to_db()
     return redirect("/tables/Seleccionar.xlsx/Seleccionar")
@@ -198,6 +196,7 @@ def drop_database():
     for i in documents_collection.find({}):
         s3.Object(AWS_BUCKET_NAME, i["name"]).delete()
     documents_collection.drop()
+    excels = {}
     return redirect("/tables/Seleccionar.xlsx/Seleccionar")
 
 if __name__ == "__main__":

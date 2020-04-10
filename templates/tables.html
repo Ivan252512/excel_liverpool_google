@@ -359,13 +359,17 @@
               <label for="btnExportar">Exportar consulta:</label>
               <input type="button" name="btnExportar" class="btn btn-success custom-button-sm form-control form-control-sm" id="btnExportar" value="Exportar consulta" />
             </div>
-            <div class="col-md-1">
-              <label for="reload">Recargar página:</label>
-              <button id="reload" onclick='location.reload();' class="btn btn-secondary custom-button-sm form-control form-control-sm">Recargar</button>
-            </div>
-            <div class="col-md-1">
-              <label for="hard_reload">Recargar página:</label>
-              <button id="hard_reload" onclick='window.location="/Seleccionar.xlsx/Seleccionar/100";' class="btn btn-secondary custom-button-sm form-control form-control-sm">Recargar todo</button>
+            <div class="col-md-3">
+              <div class="row">
+                <div class="col-md-6">
+                  <label for="reload">Recargar:</label>
+                  <button id="reload" onclick='location.reload();' class="btn btn-outline-warning custom-button-sm form-control form-control-sm">Recargar</button>
+                </div>
+                <div class="col-md-6">
+                  <label for="hard_reload">Regresar:</label>
+                  <button id="hard_reload" onclick='window.location="/Seleccionar.xlsx/Seleccionar/100";' class="btn btn-danger custom-button-sm form-control form-control-sm">Regresar</button>
+                </div>
+              </div>
             </div>
           </div>
 
