@@ -67,7 +67,10 @@ class Excel:
             if len(filters)<1:
                 return df, 500
             for i in filters.keys():
-                df =  df.loc[df[i] == filters[i]]
+                if filters[i] in ["NaN", "nan", "NAN", "none", "None", None]:
+                    df =  df.loc[df[i].isnull()]
+                else:
+                    df =  df.loc[df[i] == filters[i]]
             return df, 200
         return df, 500
 
