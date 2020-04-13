@@ -181,11 +181,12 @@ def tables_filter(document, sheet):
 def load_database():
     if request.method == 'POST':
         f = request.files['file']
-        f.save(os.path.join(UPLOAD_FOLDER, f.filename))
-        upload_file(f"/tmp/{f.filename}", AWS_BUCKET_NAME)
-        os.remove(f"/tmp/{f.filename}")
-        excels[f.filename] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+f.filename, None, dtype=str)
-        excel = Excel(f.filename)
+        filename = f.filename.replace(' ', "_")
+        f.save(os.path.join(UPLOAD_FOLDER, filename))
+        upload_file(f"/tmp/{filename}", AWS_BUCKET_NAME)
+        os.remove(f"/tmp/{filename}")
+        excels[filename] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+filename, None, dtype=str)
+        excel = Excel(filename)
         excel.load_to_db()
     return home()
 

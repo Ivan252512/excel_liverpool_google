@@ -604,6 +604,11 @@
       function ExportToExcel(htmlExport) {
           var ua = window.navigator.userAgent;
           var msie = ua.indexOf("MSIE ");
+
+          var documentSelected = $("option:selected", $("#documents")).val();
+          var pageSelected = $("option:selected", $("#pages")).val();
+
+          var url = "filter"+documentSelected;
           
           //other browser not tested on IE 11
           // If Internet Explorer
@@ -614,13 +619,13 @@
               iframeExport.document.write(htmlExport);
               iframeExport.document.close();
               iframeExport.focus();
-              sa = iframeExport.document.execCommand("SaveAs", true, "List.xls");
+              sa = iframeExport.document.execCommand("SaveAs", true, url);
           }
           else {      
               var link = document.createElement('a');
           
               document.body.appendChild(link); // Firefox requires the link to be in the body
-              link.download = "List.xls";
+              link.download = url;
               link.href = 'data:application/vnd.ms-excel,' + escape(htmlExport);
               link.click();
               document.body.removeChild(link);
