@@ -363,11 +363,11 @@
               <div class="row">
                 <div class="col-md-6">
                   <label for="reload">Recargar:</label>
-                  <button id="reload" onclick='location.reload();' class="btn btn-outline-warning custom-button-sm form-control form-control-sm">Recargar</button>
+                  <button id="reload" class="btn btn-outline-warning custom-button-sm form-control form-control-sm">Recargar</button>
                 </div>
                 <div class="col-md-6">
                   <label for="hard_reload">Regresar:</label>
-                  <button id="hard_reload" onclick='window.location="/Seleccionar.xlsx/Seleccionar/100";' class="btn btn-danger custom-button-sm form-control form-control-sm">Regresar</button>
+                  <button id="hard_reload" onclick='window.location="/";' class="btn btn-danger custom-button-sm form-control form-control-sm">Regresar</button>
                 </div>
               </div>
             </div>
@@ -582,8 +582,15 @@
       $("#pages").on('change', function () { 
         var documentSelected = $("option:selected", $("#documents")).val();
         var pageSelected = $("option:selected", $("#pages")).val();
-        var limit = $("#limit_querys").val()
+        var limit = $("#limit_querys").val();
         window.location = "/"+documentSelected+"/"+pageSelected+"/"+limit;
+      });
+
+      $("#reload").on('click', function(){
+        var limit = $("#limit_querys").val();
+        var url = document.URL;
+        url = url.substring(0,url.lastIndexOf("/"));
+        window.location = url+"/"+limit;
       });
 
 

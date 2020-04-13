@@ -24,7 +24,7 @@ client = pymongo.MongoClient(CONNECTION_STRING, maxPoolSize=10000)
 db = client.get_database('excel')
 documents_collection = pymongo.collection.Collection(db, 'documents')
 
-excels = {'seleccionar' : pd.read_excel("Seleccionar.xlsx", None)}
+excels = {'Seleccionar' : pd.read_excel("Seleccionar.xlsx", None)}
 
 for i in documents_collection.find({}):
     excels[i['name']] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+i['name'], None, dtype=str)
@@ -35,12 +35,9 @@ class Excel:
         try:
             self.df = excels[name]
         except:
-            self.df = excels['seleccionar']
+            self.df = excels['Seleccionar']
         finally:
             self.sheets = self.df.keys()
-
-    def get_sheets(self):
-        return self.df.keys()
 
     def load_to_db(self):
         sheets = {}
@@ -83,29 +80,25 @@ def upload_file(file_name, bucket):
 
 @application.route("/", methods=['GET', 'POST'])
 def home():
-    return tables("Selecionar.xlsx", "Seleccionar", 100)
+    return tables("Seleccionar", "Seleccionar", 100)
 
 @application.route("/<document>/<sheet>/<limit>", methods=['GET', 'POST'])
 def tables(document, sheet, limit):
+
+    document = str(document).replace("'", "")
+    document = document.replace('"', "")
 
     sheet = str(sheet).replace("'", "")
     sheet = sheet.replace('"', "")
 
     documents = documents_collection.find({})
     documents2 = documents_collection.find({})
-
-    document_db = documents_collection.find_one({"name":document})
+   
     
 
-    if document_db==None or len(document_db)<1:
-        excel = Excel(document)
-        sheets = excel.get_sheets()
-    else:
-        sheets = list(document_db["sheets"].values())
-        excel = Excel(document_db["name"])
-        if sheet == "Seleccionar":
-            sheet = sheets[0]
-    
+    excel = Excel(document)
+    sheets = excel.get_sheets()
+
     doc, res = excel.filter(sheet,  1)
 
     del excel
@@ -139,13 +132,16 @@ def get_pages(document):
 
 @application.route("/tables_filter/<document>/<sheet>", methods=['GET', 'POST'])
 def tables_filter(document, sheet):
+    document = str(document).replace("'", "")
+    document = document.replace('"', "")
+
     sheet = str(sheet).replace("'", "")
     sheet = sheet.replace('"', "")
 
     content = request.get_json()
-    document_db = documents_collection.find_one({"name":document})
 
-    excel = Excel(document_db["name"])
+    excel = Excel(document)
+
     doc, res = excel.filter(str(sheet),  content)
 
     cols_values = []
@@ -188,7 +184,7 @@ def load_database():
         excels[f.filename] = pd.read_excel("https://liverpoolexcel.s3-us-west-1.amazonaws.com//tmp/"+f.filename, None, dtype=str)
         excel = Excel(f.filename)
         excel.load_to_db()
-    return redirect("/tables/Seleccionar.xlsx/Seleccionar")
+    return home()
 
 @application.route('/drop_database', methods=['GET'])
 def drop_database():
@@ -196,8 +192,8 @@ def drop_database():
     for i in documents_collection.find({}):
         s3.Object(AWS_BUCKET_NAME, i["name"]).delete()
     documents_collection.drop()
-    excels = {}
-    return redirect("/tables/Seleccionar.xlsx/Seleccionar")
+    excels = {'Seleccionar' : pd.read_excel("Seleccionar.xlsx", None)}
+    return redirect("/")
 
 if __name__ == "__main__":
     application.debug = True
